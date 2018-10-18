@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Script created by click2install, if you want to fork it, place nice and ask first
+# Script created by click2install, if you want to fork it, play nice and ask first
 # donations are always a nice surprise too
 
 TMP_FOLDER=$(mktemp -d) 
 
 DAEMON_ARCHIVE=${1:-""}
 ARCHIVE_STRIP=""
-DEFAULT_PORT=48000
+DEFAULT_PORT=50607
 
 NODE_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
 
@@ -103,24 +103,10 @@ function prepare_system()
     pkg-config \
     pwgen \
     software-properties-common \
-	tar \
+	  tar \
     ufw \
     unzip \
     wget
-  clear
-  
-  if [ "$?" -gt "0" ]; then
-      echo -e "${RED}Not all of the required packages were installed correctly.\n"
-      echo -e "Try to install them manually by running the following commands:${NC}\n"
-      echo -e "apt update"
-      echo -e "apt -y install software-properties-common"
-      echo -e "apt-add-repository -y ppa:bitcoin/bitcoin"
-      echo -e "apt update"
-      echo -e "apt install -y make software-properties-common build-essential libtool autoconf libssl-dev libboost-dev libboost-chrono-dev libboost-filesystem-dev \
-    libboost-program-options-dev libboost-system-dev libboost-test-dev libboost-thread-dev automake git wget curl libdb4.8-dev libdb4.8++-dev \
-    bsdmainutils libminiupnpc-dev libgmp3-dev ufw pkg-config libevent-dev libdb5.3++ unzip libzmq5 htop pwgen"
-   exit 1
-  fi
 
   clear
 }
@@ -181,7 +167,7 @@ User=${USER_NAME}
 Group=${USER_NAME}
 WorkingDirectory=${HOME_FOLDER}
 ExecStart=${DAEMON_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/$CONFIG_FILE -daemon 
-ExecStop=${CLI_PATH} stop
+ExecStop=${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/$CONFIG_FILE stop
 Restart=always
 RestartSec=3
 PrivateTmp=true
@@ -223,15 +209,15 @@ function get_port_and_user()
     num=$((num + 1))
     if [[ ${num} > 3 ]];
     then
-      echo "${RED} To ensure your VPS and masternode run smoothly, you should not run more than 3 ${COIN_NAME} nodes on the same VPS${NC}"
-      echo "${RED} The install script will now exit, so you can run it from another VPS${NC}"
+      echo -e "${RED} To ensure your VPS and masternode run smoothly, you should not run more than 3 ${COIN_NAME} nodes on the same VPS${NC}"
+      echo -e "${RED} The install script will now exit so you can run it from another VPS.${NC}"
       exit 1
     fi
   else
     num=1
   fi
   
-  PORT=$((${PORT} + ((${num} - 1) * 2)))
+  PORT=$((${DEFAULT_PORT} + ((${num} - 1) * 2)))
   USER_NAME="${COIN_NAME}-mn${num}"
 }
 
@@ -244,10 +230,10 @@ function create_user()
   echo "${USER_NAME}:${USERPASS}" | chpasswd
 
   local home=$(sudo -H -u ${USER_NAME} bash -c 'echo ${HOME}')
-  HOME_FOLDER="${home}/.${COIN_NAME}core"
+  HOME_FOLDER="${home}/.${COIN_NAME}"
       
   mkdir -p ${HOME_FOLDER}
-  chown -R ${USER_NAME}: ${HOME_FOLDER} >/dev/null 2>&1
+  chown -R ${USER_NAME}:${USER_NAME} ${HOME_FOLDER} >/dev/null 2>&1
 }
 
 function create_config() 
@@ -269,27 +255,35 @@ EOF
 
 function start_node()
 {
-  sudo -u ${USER_NAME} ${DAEMON_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} -daemon >/dev/null 2>&1
+  ${DAEMON_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} -daemon >/dev/null 2>&1
   sleep 5
 }
 
+KEY_ATTEMPT=0
 function create_key() 
 {
-  echo "${GREEN} Creating masternode private key${NC}"
-  local privkey=$(sudo -u ${USER_NAME} ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} masternode genkey 2>&1)
+  echo -e "${GREEN} Creating masternode private key${NC}"
+  local privkey=$(${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} masternode genkey 2>&1)
 
   if [[ -z "${privkey}" ]] || [[ "${privkey^^}" = *"ERROR"* ]]; 
   then
     local retry=5
-    echo "${GREEN}  - Unable to request private key or node not ready, retrying in ${retry} seconds ...${NC}"
+    echo -e "${GREEN}  - Attempt ${KEY_ATTEMPT}/20: Unable to request private key or node not ready, retrying in ${retry} seconds ...${NC}"
     sleep ${retry}
-
-    create_key
+    
+    KEY_ATTEMPT=$[KEY_ATTEMPT+1]
+    if [[ ${KEY_ATTEMPT} -eq 20 ]];
+    then
+      echo -e "${RED}  - Attempt ${KEY_ATTEMPT}/20: Unable to request a private key from the masternode, installation cannot continue.${NC}"
+      exit 1
+    else
+      create_key
+    fi
   else
-    "${GREEN}  - Privkey successfully generated${NC}"
+    echo -e "${GREEN}  - Privkey successfully generated${NC}"
     PRIVKEY=${privkey}
 
-    sudo -u ${USER_NAME} ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} stop >/dev/null 2>&1
+    ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} stop >/dev/null 2>&1
     sleep 5
   fi
 }
@@ -300,7 +294,7 @@ function update_config()
 logtimestamps=1
 maxconnections=256
 masternode=1
-externalip=${NODEIP}
+externalip=${NODE_IP}
 masternodeprivkey=${PRIVKEY}
 EOF
   chown ${USER_NAME}: ${HOME_FOLDER}/${CONFIG_FILE} >/dev/null
@@ -330,15 +324,15 @@ function show_output()
  echo
  echo -e "================================================================================================================================"
  echo -e "${GREEN}"
- echo -e "                                                 ${COIN_NAME} installation completed${NC}"
+ echo -e "                                                 ${COIN_NAME^^} installation completed${NC}"
  echo
- echo -e " Your ${COIN_NAME} coin master node is up and running." 
- echo -e "  - it is running as the${GREEN}${USER_NAME}${NC} user, listening on port ${GREEN}${PORT}${NC} at your VPS address ${GREEN}${NODEIP}${NC}."
+ echo -e " Your ${COIN_NAME^^} coin master node is up and running." 
+ echo -e "  - it is running as the ${GREEN}${USER_NAME}${NC} user, listening on port ${GREEN}${PORT}${NC} at your VPS address ${GREEN}${NODE_IP}${NC}."
  echo -e "  - the ${GREEN}${USER_NAME}${NC} password is ${GREEN}${USERPASS}${NC}"
- echo -e "  - the ${COIN_NAME} configuration file is located at ${GREEN}${HOME_FOLDER}/${CONFIG_FILE}${NC}"
+ echo -e "  - the ${COIN_NAME^^} configuration file is located at ${GREEN}${HOME_FOLDER}/${CONFIG_FILE}${NC}"
  echo -e "  - the masternode privkey is ${GREEN}${PRIVKEY}${NC}"
  echo
- echo -e " You can manage your ${COIN_NAME} service from the cmdline with the following commands:"
+ echo -e " You can manage your ${COIN_NAME^^} service from the cmdline with the following commands:"
  echo -e "  - ${GREEN}systemctl start ${USER_NAME}.service${NC} to start the service for the given user."
  echo -e "  - ${GREEN}systemctl stop ${USER_NAME}.service${NC} to stop the service for the given user."
  echo -e "  - ${GREEN}systemctl status ${USER_NAME}.service${NC} to see the service status for the given user."
@@ -401,13 +395,13 @@ echo -e "                                     88 YY 88 8888Y\"  88  Yb"
 echo
 echo                          
 echo -e "${NC}"
-echo -e " This script will automate the installation of your ${COIN_NAME} coin masternode and server configuration by"
+echo -e " This script will automate the installation of your ${COIN_NAME^^} coin masternode and server configuration by"
 echo -e " performing the following steps:"
 echo
 echo -e "  - Prepare your system with the required dependencies"
-echo -e "  - Obtain the latest ${COIN_NAME} masternode files from the ${COIN_NAME} GitHub repository"
-echo -e "  - Create a user and password to run the ${COIN_NAME} masternode service"
-echo -e "  - Install the ${COIN_NAME} masternode service under the new user [not root]"
+echo -e "  - Obtain the latest ${COIN_NAME^^} masternode files from the ${COIN_NAME} GitHub repository"
+echo -e "  - Create a user and password to run the ${COIN_NAME^^} masternode service"
+echo -e "  - Install the ${COIN_NAME^^} masternode service under the new user [not root]"
 echo -e "  - Add DDoS protection using fail2ban"
 echo -e "  - Update the system firewall to only allow the masternode port and outgoing connections"
 echo -e "  - Rotate and archive the masternode logs to save disk space"
@@ -419,7 +413,7 @@ echo -e " ${GREEN}${DAEMON_ARCHIVE}${NC}"
 echo
 echo -e " Script created by click2install"
 echo -e "  - GitHub: https://github.com/click2install"
-echo -e "  - Discord: click2install#9625"
+echo -e "  - Discord: click2install#0001"
 echo -e "${GREEN}"
 echo -e "============================================================================================================="              
 echo -e "${NC}"
@@ -439,7 +433,7 @@ elif [[ "${NEW_NODE}" == "new" ]]; then
   deploy_binary
   setup_node
 else
-  echo -e "${GREEN}${COIN_NAME} daemon already running.${NC}"
+  echo -e "${GREEN}${COIN_NAME^^} daemon already running.${NC}"
   exit 0
 fi
 
