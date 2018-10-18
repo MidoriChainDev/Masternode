@@ -17,7 +17,7 @@ You will need to run the script before setting up your node in your local wallet
 To get started with the installation, login to your VPS as the root user and run the two lines below.
 
 ```
-wget https://github.com/MidoriChainDev/MidoriChain/raw/master/install-midori.sh  
+wget https://github.com/MidoriChainDev/Masternode/raw/master/install-midori.sh  
 bash install-midori.sh
 ```
 
@@ -29,13 +29,13 @@ Run the script first so you have the information when it finishes, to complete y
 ```
 The script assumes you are running a cold wallet on your local PC and this script will execute on a Ubuntu Linux VPS (server). The steps involved are:
 
- 1. Run the masternode installation script as per the [instructions above](https://github.com/MidoriChainDev/MidoriChain#installation).
+ 1. Run the masternode installation script as per the [instructions above](https://github.com/MidoriChainDev/Masternode#installation).
  2. When you are finished this process you will get some information on what has been done as well as some important information you will need for your cold wallet setup.
  3. **Copy/paste the output of this script into a text file and keep it safe.**
 
 You are now ready to configure your local wallet and finish the masternode setup
 
- 1. Make sure you have downloaded the latest wallet from https://github.com/midorideveloper/MidoriCore/releases
+ 1. Make sure you have downloaded the latest wallet from https://github.com/MidoriChainDev/MidoriCore/releases
  2. Install the wallet on your local PC
  3. Start the wallet and let if completely synchronize to the network - this will take some time
  4. Create a new `Receiving Address` from the wallets `File` menu and name it appropriately, e.g. MN-1
@@ -59,9 +59,9 @@ The script allows for multiple nodes to be setup on the same server, using the s
 
 During the execution of the script a new user will be created to run each masternode. For stability of the Midori coin as well as keeping your VPS well resourced this script only supports installing up to 3 Midori masternodes on the same VPS. 
 
-Once you have setup the 2nd and/or 3rd masternodes, use the output of the script for each masternode and follow the [steps above](https://github.com/MidoriChainDev/MidoriChain#how-to-setup-your-masternode-with-this-script-and-a-cold-wallet-on-your-pc) in your wallet, where each new masternode is a new line in your `masternode.conf` file. **NOTE:** All the port numbers in your masternode.conf file will be 48000 or the wallet will not re-start after you save the config file.
+Once you have setup the 2nd and/or 3rd masternodes, use the output of the script for each masternode and follow the [steps above](https://github.com/MidoriChainDev/Masternode#how-to-setup-your-masternode-with-this-script-and-a-cold-wallet-on-your-pc) in your wallet, where each new masternode is a new line in your `masternode.conf` file. **NOTE:** All the port numbers in your masternode.conf file will be 48000 or the wallet will not re-start after you save the config file.
 
-Note that multiple masternodes use only one instance of the `midorid` and `midori-cli` binary files located in `/usr/local/bin` and they each have their own configuration located in `/home/<username>/.midoricore` folder.
+Note that multiple masternodes use only one instance of the `midorid` and `midori-cli` binary files located in `/usr/local/bin` and they each have their own configuration located in `/home/<username>/.midori` folder.
 
 &nbsp;
 
