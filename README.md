@@ -1,7 +1,7 @@
 # Midori Coin
 
 Shell script to install a `Midori Coin Masternode` on a Linux server running Ubuntu 16.04. 
-This script will support installing 3 Midori masternodes on the same VPS.
+Midori does not support multiple masternodes on the same server.
 
 
 ## Installation
@@ -27,17 +27,17 @@ bash install-midori.sh
 ```
 Run the script first so you have the information when it finishes, to complete your cold wallet setup.
 ```
-The script assumes you are running a cold wallet on your local PC and this script will execute on a Ubuntu Linux VPS (server). The steps involved are:
+The script assumes you are running a cold wallet on your local PC and this script will execute on a Ubuntu Linux server. The steps involved are:
 
  1. Run the masternode installation script as per the [instructions above](https://github.com/MidoriChainDev/Masternode#installation).
  2. When you are finished this process you will get some information on what has been done as well as some important information you will need for your cold wallet setup.
  3. **Copy/paste the output of this script into a text file and keep it safe.**
 
-You are now ready to configure your local wallet and finish the masternode setup
+You are now ready to configure your local wallet and finish the masternode setup:
 
  1. Make sure you have downloaded the latest wallet from https://github.com/MidoriChainDev/MidoriCore/releases
  2. Install the wallet on your local PC
- 3. Start the wallet and let if completely synchronize to the network - this will take some time
+ 3. Start the wallet and let it completely synchronize to the network - this will take some time
  4. Create a new `Receiving Address` from the wallets `File` menu and name it appropriately, e.g. MN-1
  5. Unlock your wallet and send **exactly 5,000 MDR** to the address created in step #4
  6. Wait for the transaction from step #5 to be fully confirmed. Look for a tick in the first column in your transactions tab
@@ -52,43 +52,41 @@ You are now ready to configure your local wallet and finish the masternode setup
  15. Right click > Start Alias
  16. Your node should now be running successfully, wait for some time for it to connect with the network and the `Active` time to start counting up.
 
- &nbsp;
+&nbsp;
+## Wallet Synchroniation Issues (Local PC)
+If for some reason your wallet does not fully synchronise, you can run the following commands from your wallet console, one at a time:
 
-## Multiple master nodes on one server
-The script allows for multiple nodes to be setup on the same server, using the same IP address. 
+```
+addnode 172.245.158.115 onetry
+addnode 45.76.81.87 onetry
+addnode 45.76.185.124 onetry
+```
+You wallet should soon after start to synchronise properly. After running the commands it is not necessary to restart your wallet. 
 
-During the execution of the script a new user will be created to run each masternode. For stability of the Midori coin as well as keeping your VPS well resourced this script only supports installing up to 3 Midori masternodes on the same VPS. 
-
-Once you have setup the 2nd and/or 3rd masternodes, use the output of the script for each masternode and follow the [steps above](https://github.com/MidoriChainDev/Masternode#how-to-setup-your-masternode-with-this-script-and-a-cold-wallet-on-your-pc) in your wallet, where each new masternode is a new line in your `masternode.conf` file. **NOTE:** All the port numbers in your masternode.conf file will be 48000 or the wallet will not re-start after you save the config file.
-
-Note that multiple masternodes use only one instance of the `midorid` and `midori-cli` binary files located in `/usr/local/bin` and they each have their own configuration located in `/home/<username>/.midori` folder.
 
 &nbsp;
 
-
-## Masternode commands
-Because the masternode runs under a user account, you cannot login as root to your server and run `midori-cli masternode status`, if you do you will get an error. You need to switch the to the user that you installed the masternode under when running the script. **So make sure you keep the output of the script after it runs.**
+## Masternode commands (VPS)
+Because the masternode runs under a user account, you cannot login as root to your server and run commands like `midori-cli masternode status`, if you do you will get an error. You need to first switch to the `midori-mn1` user. **So make sure you keep the output of the script after it runs.**
 
 The masternode runs as a service, so if you do not stop the service and just try to stop the daemon process, it will restart again. You can start and stop the masternode when logged in as root or the user by running the following two commands:
 
 #### To stop your masternode 
 ```
-systemctl stop <username>.service
+systemctl stop midori-mn1.service
 ```
 
 #### To start your masternode 
 ```
-systemctl start <username>.service
+systemctl start midori-mn1.service
 ```
 
 #### To interactively switch from the root user to the masternode user, you can run:
 ```
- su - <username>
+ su - midori-mn1
 ```
 If you are asked for a password, it is in the script output you received when you installed the masternode, you can right click and paste the password. 
-The following commands can then be run against the node that is running as the user you just switched to. Users for the Midori coin are created as `midori-mn1`, `midori-mn2` and `midori-mn3`.
-
-Note: the commands below will only query the node that is running under the current user you just switched to. If you want to query another running node, you need to `exit` then switch to that user before running these commands.
+The following commands can then be run against the node which is running as the `midori-mn1` user.
 
 #### To query your masternodes status
 ```
@@ -105,12 +103,12 @@ Note: the commands below will only query the node that is running under the curr
  midori-cli mnsync status
 ```
 
-## Removing a masternode and user account
-If something goes wrong with your installation or you want to remove a masternode, you can do so with the following command.
+## Removing a masternode and user account (VPS)
+If something goes wrong with your installation or you want to remove the masternode, you can do so with the following command.
 ```
- userdel -r <username>
+ userdel -r midori-mn1
 ```
-This will remove the user and its home directory. If you then re-run the installation script you can re-use that username.
+This will remove the user and its home directory. You then re-run the installation script and it will re-create everything for the `midori-mn1` user.
 
 &nbsp;
 
@@ -119,7 +117,7 @@ The script will set up the required firewall rules to only allow inbound node co
 
 The [fail2ban](https://www.fail2ban.org/wiki/index.php/Main_Page) package is also used to mitigate DDoS attempts on your server.
 
-Despite this script needing to run as `root` you should secure your Ubuntu server as normal with the following precautions:
+Despite this script needing to be run as `root` you should secure your Ubuntu server as normal with the following precautions:
 
  - disable password authentication
  - disable root login

@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# Script created by click2install, if you want to fork it, play nice and ask first
-# donations are always a nice surprise too
+# Script created by click2install, 
+# if you want to fork it, play nice and ask first. donations are always a nice surprise too
 
-TMP_FOLDER=$(mktemp -d) 
+# Discord: click2install#0001
+# BTC: 1DJdhFp6CiVZSBSsXcecp1FnuHXDcsYQPu
 
-DAEMON_ARCHIVE=${1:-""}
+
+TMP_FOLDER=$(mktemp -d)
+
+DAEMON_ARCHIVE=${1:-"https://github.com/MidoriChainDev/MidoriCore/releases/download/v1.0.0.0/midorid-1.0.0.0-linux.tar.gz"}
 ARCHIVE_STRIP=""
 DEFAULT_PORT=50607
 
@@ -37,9 +41,11 @@ function checks()
      exit 1
   fi
 
-  if [ -n "$(pidof ${DAEMON_FILE})" ]; then
-    read -e -p " $(echo -e The ${COIN_NAME} daemon is already running.${YELLOW} Do you want to add another master node? [Y/N] $NC)" NEW_NODE
-    clear
+  if [ -n "$(pidof ${DAEMON_FILE})" ]; 
+  then
+    echo -e "${RED}The ${COIN_NAME^^} daemon is already running. ${COIN_NAME^^} does not support multiple masternodes on the same server.${NC}"
+    echo -e "${RED}The script will now exit so you can install your masternode on another server.${NC}"
+    exit 1
   else
     NEW_NODE="new"
   fi
@@ -201,24 +207,9 @@ EOF
 function get_port_and_user()
 {
   echo -e "${GREEN} Identifying username and port for the masternode${NC}"
-
-  local num=$(ls -al /home | grep ${COIN_NAME}-mn | cut -d' ' -f4 | cut -d'-' -f2 | sed s/mn//g | sort -n | tail -1)
-
-  if [[ ! -z ${num} ]];
-  then
-    num=$((num + 1))
-    if [[ ${num} > 3 ]];
-    then
-      echo -e "${RED} To ensure your VPS and masternode run smoothly, you should not run more than 3 ${COIN_NAME} nodes on the same VPS${NC}"
-      echo -e "${RED} The install script will now exit so you can run it from another VPS.${NC}"
-      exit 1
-    fi
-  else
-    num=1
-  fi
   
-  PORT=$((${DEFAULT_PORT} + ((${num} - 1) * 2)))
-  USER_NAME="${COIN_NAME}-mn${num}"
+  PORT=${DEFAULT_PORT}
+  USER_NAME="${COIN_NAME}-mn1"
 }
 
 function create_user() 
@@ -233,6 +224,10 @@ function create_user()
   HOME_FOLDER="${home}/.${COIN_NAME}"
       
   mkdir -p ${HOME_FOLDER}
+}
+
+function chown_home_folder()
+{
   chown -R ${USER_NAME}:${USER_NAME} ${HOME_FOLDER} >/dev/null 2>&1
 }
 
@@ -255,7 +250,7 @@ EOF
 
 function start_node()
 {
-  ${DAEMON_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} -daemon >/dev/null 2>&1
+  sudo -u ${USER_NAME} ${DAEMON_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} -daemon >/dev/null 2>&1
   sleep 5
 }
 
@@ -263,7 +258,7 @@ KEY_ATTEMPT=0
 function create_key() 
 {
   echo -e "${GREEN} Creating masternode private key${NC}"
-  local privkey=$(${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} masternode genkey 2>&1)
+  local privkey=$(sudo -u ${USER_NAME} ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} masternode genkey 2>&1)
 
   if [[ -z "${privkey}" ]] || [[ "${privkey^^}" = *"ERROR"* ]]; 
   then
@@ -283,7 +278,7 @@ function create_key()
     echo -e "${GREEN}  - Privkey successfully generated${NC}"
     PRIVKEY=${privkey}
 
-    ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} stop >/dev/null 2>&1
+    sudo -u ${USER_NAME} ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} stop >/dev/null 2>&1
     sleep 5
   fi
 }
@@ -297,7 +292,6 @@ masternode=1
 externalip=${NODE_IP}
 masternodeprivkey=${PRIVKEY}
 EOF
-  chown ${USER_NAME}: ${HOME_FOLDER}/${CONFIG_FILE} >/dev/null
 }
 
 function add_log_rotate()
@@ -341,30 +335,20 @@ function show_output()
  echo -e "  - auto start when your VPS is rebooted."
  echo -e "  - rotate your ${GREEN}${LOG_FILE}${NC} file once per week and keep the last 4 weeks of logs."
  echo
- echo -e " You can find the masternode status when logged in as ${USER_NAME} using the command below:"
+ echo -e " You can find the masternode status when logged in as ${GREEN}${USER_NAME}${NC} using the command below:"
  echo -e "  - ${GREEN}${CLI_FILE} getinfo${NC} to retreive your nodes status and information"
  echo
- echo -e "   if you are not logged in as ${GREEN}${USER_NAME}${NC} then you can run ${YELLOW}su - ${USER_NAME}${NC} to switch to that user before"
- echo -e "   running the ${GREEN}${CLI_FILE} getinfo${NC} command."
- echo -e "   NOTE: the ${DAEMON_FILE} daemon must be running first before trying this command. See notes above on service commands usage."
+ echo -e " If you are not logged in as ${GREEN}${USER_NAME}${NC} then you can run ${YELLOW}su - ${USER_NAME}${NC} to switch to that user"
+ echo -e " before running the ${GREEN}${CLI_FILE} getinfo${NC} command."
+ echo -e " NOTE: the ${DAEMON_FILE} daemon must be running first before trying this command. See notes above on service commands usage."
  echo
  echo -e " Make sure you keep the information above somewhere private and secure so you can refer back to it." 
  echo
- echo -e "${YELLOW} NEVER SHARE YOUR PRIVKEY WITH ANYONE, IF SOMEONE OBTAINS IT THEY CAN STEAL ALL YOUR COINS.${NC}"
+ echo -e " ${YELLOW}==> NEVER SHARE YOUR PRIVKEY WITH ANYONE, IF SOMEONE OBTAINS IT THEY CAN STEAL ALL YOUR COINS <==${NC}"
  echo
  echo -e "================================================================================================================================"
  echo
  echo
-}
-
-function ask_watch()
-{  
-  read -e -p " $(echo -e ${YELLOW}Do you want to watch the ${COIN_NAME} daemon status whilst it is synchronizing? [Y/N]${NC})" WATCH_CHOICE
-  
-  if [[ ("${WATCH_CHOICE}" == "y" || "${WATCH_CHOICE}" == "Y") ]]; then
-    local cmd=$(echo "${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} getinfo && ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} mnsync status && ${CLI_PATH} -datadir=${HOME_FOLDER} -conf=${HOME_FOLDER}/${CONFIG_FILE} masternode status")
-    watch -n 5 ${cmd}
-  fi  
 }
 
 function setup_node() 
@@ -372,14 +356,15 @@ function setup_node()
   get_port_and_user
   create_user
   create_config
+  chown_home_folder
   start_node
   create_key
   update_config
+  chown_home_folder
   enable_firewall
   add_daemon_service
   add_log_rotate
   show_output
-  ask_watch
 }
 
 clear
