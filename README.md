@@ -10,14 +10,14 @@ The installation script will do everything needed to setup your VPS with the lat
 
 When you run the script it will tell you what it will do on your system. Once completed there is a summary of the information you need to be aware of regarding your node setup which you can copy/paste to your local PC. 
 ```
-Make sure you keep the script output information safe for later.
+Make sure you keep the script output information safe for later and never show or tell anyone what your private key is or they can steal your coins.
 ```
 
 You will need to run the script before setting up your node in your local wallet as it will generate a `private key` for you to use in your `masternode.conf` file.
 To get started with the installation, login to your VPS as the root user and run the two lines below.
 
 ```
-wget https://github.com/MidoriChainDev/Masternode/raw/master/install-midori.sh  
+wget https://raw.githubusercontent.com/MidoriChainDev/Masternode/master/install-midori.sh
 bash install-midori.sh
 ```
 
@@ -44,12 +44,12 @@ You are now ready to configure your local wallet and finish the masternode setup
  7. Once confirmed, open your wallet console and type: `masternode outputs`
  8. Open your masternode configuration file from the wallets `Tools` menu item.
  9. In your masternodes.conf file add an entry that looks like: `[address-name from #4] [ip:port of your VPS from script output] [privkey from script output] [txid from from #7] [tx output index from #7]` - 
- 10. Your masternodes.conf file entry should look like: `MN-1 127.0.0.2:48000 93HaYBVUCYjEMeeH1Y4sBGLALQZE1Yc1K64xiqgX37tGBDQL8Xg 2bcd3c84c84f87eaa86e4e56834c92927a07f9e18718810b92e0d0324456a67c 0` and it must be all on one line in your masternodes config file
+ 10. Your masternodes.conf file entry should look like: `MN-1 127.0.0.2:48000 93HaYBVUCYjEMeeH1Y4sBGLALQZE1Yc1K64xiqgX37tGBDQL8Xg 2bcd3c84c84f87eaa86e4e56834c92927a07f9e18718810b92e0d0324456a67c 0` and it must be all on one line in your masternodes config file. Make sure there are no blank lines in the file and no leading or trailing spaces on any of the lines in the file. 
  11. Save and close your masternodes.conf file
  12. Close your wallet and restart
  13. Go to Masternodes
  14. Click the row for the masternode you just added
- 15. Right click > Start Alias
+ 15. Right click the masternode row, then click Start Alias
  16. Your node should now be running successfully, wait for some time for it to connect with the network and the `Active` time to start counting up.
 
 &nbsp;
@@ -69,7 +69,7 @@ You wallet should soon after start to synchronise properly. After running the co
 ## Masternode commands (VPS)
 Because the masternode runs under a user account, you cannot login as root to your server and run commands like `midori-cli masternode status`, if you do you will get an error. You need to first switch to the `midori-mn1` user. **So make sure you keep the output of the script after it runs.**
 
-The masternode runs as a service, so if you do not stop the service and just try to stop the daemon process, it will restart again. You can start and stop the masternode when logged in as root or the user by running the following two commands:
+The masternode runs as a service, so if you do not stop the service and just try to stop the daemon process, it will restart again. You can start and stop the masternode when logged in as root or the `midori-mn1` user by running the following two commands:
 
 #### To stop your masternode 
 ```
@@ -85,7 +85,7 @@ systemctl start midori-mn1.service
 ```
  su - midori-mn1
 ```
-If you are asked for a password, it is in the script output you received when you installed the masternode, you can right click and paste the password. 
+If you are asked for a password, it is in the script output you received when you installed the masternode, you can right click and paste the password (which will not be shown), then press Enter.
 The following commands can then be run against the node which is running as the `midori-mn1` user.
 
 #### To query your masternodes status

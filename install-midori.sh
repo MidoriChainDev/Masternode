@@ -217,7 +217,7 @@ function create_user()
   echo -e "${GREEN} Creating a new user ${USER_NAME} to run the masternode${NC}"
   useradd -m ${USER_NAME}
 
-  local USERPASS=$(pwgen -s 12 1)
+  USERPASS=$(pwgen -s 12 1)
   echo "${USER_NAME}:${USERPASS}" | chpasswd
 
   local home=$(sudo -H -u ${USER_NAME} bash -c 'echo ${HOME}')
