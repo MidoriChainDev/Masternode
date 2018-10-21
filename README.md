@@ -44,7 +44,7 @@ You are now ready to configure your local wallet and finish the masternode setup
  7. Once confirmed, open your wallet console and type: `masternode outputs`
  8. Open your masternode configuration file from the wallets `Tools` menu item.
  9. In your masternodes.conf file add an entry that looks like: `[address-name from #4] [ip:port of your VPS from script output] [privkey from script output] [txid from from #7] [tx output index from #7]` - 
- 10. Your masternodes.conf file entry should look like: `MN-1 127.0.0.2:50706 93HaYBVUCYjEMeeH1Y4sBGLALQZE1Yc1K64xiqgX37tGBDQL8Xg 2bcd3c84c84f87eaa86e4e56834c92927a07f9e18718810b92e0d0324456a67c 0` and it must be all on one line in your masternodes config file. Make sure there are no blank lines in the file and no leading or trailing spaces on any of the lines in the file. Do not copy/paste from MS Word, if you are pasting any content use a plain text editor like Notepad, Textpad, etc. or you may get errors when the wallet starts.
+ 10. Your masternodes.conf file entry should look like: `MN-1 127.0.0.2:50607 93HaYBVUCYjEMeeH1Y4sBGLALQZE1Yc1K64xiqgX37tGBDQL8Xg 2bcd3c84c84f87eaa86e4e56834c92927a07f9e18718810b92e0d0324456a67c 0` and it must be all on one line in your masternodes config file. Make sure there are no blank lines in the file and no leading or trailing spaces on any of the lines in the file. Do not copy/paste from MS Word, if you are pasting any content use a plain text editor like Notepad, Textpad, etc. or you may get errors when the wallet starts.
  11. Save and close your masternodes.conf file
  12. Close your wallet and restart
  13. Go to Masternodes
