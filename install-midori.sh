@@ -65,6 +65,7 @@ function prepare_system()
       chmod 600 /swapfile
       mkswap /swapfile
       swapon -a /swapfile
+      echo "/swapfile    none    swap    sw    0   0" >> /etc/fstab
     else
       echo -e "${GREEN}Swap file already exists.${NC}"
     fi
