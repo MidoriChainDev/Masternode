@@ -41,9 +41,11 @@ function checks()
      exit 1
   fi
 
-  if [ -n "$(pidof ${DAEMON_FILE})" ]; then
-    read -e -p " $(echo -e The ${COIN_NAME} daemon is already running.${YELLOW} Do you want to add another master node? [Y/N] $NC)" NEW_NODE
-    clear
+  if [ -n "$(pidof ${DAEMON_FILE})" ]; 
+  then
+    echo -e "${RED}The ${COIN_NAME^^} daemon is already running. ${COIN_NAME^^} does not support multiple masternodes on the same server.${NC}"
+    echo -e "${RED}The script will now exit so you can install your masternode on another server.${NC}"
+    exit 1
   else
     NEW_NODE="new"
   fi
@@ -108,7 +110,7 @@ function prepare_system()
     pkg-config \
     pwgen \
     software-properties-common \
-    tar \
+	  tar \
     ufw \
     unzip \
     wget
@@ -204,26 +206,11 @@ EOF
 }
 
 function get_port_and_user()
-{  
+{
   echo -e "${GREEN} Identifying username and port for the masternode${NC}"
-
-  local num=$(ls -al /home | grep ${COIN_NAME}-mn | cut -d' ' -f4 | cut -d'-' -f2 | sed s/mn//g | sort -n | tail -1)
-
-  if [[ ! -z ${num} ]];
-  then
-    num=$((num + 1))
-    if [[ ${num} > 3 ]];
-    then
-      echo -e "${RED} To ensure your VPS and masternode run smoothly, you should not run more than 3 ${COIN_NAME} nodes on the same VPS${NC}"
-      echo -e "${RED} The install script will now exit so you can run it from another VPS.${NC}"
-      exit 1
-    fi
-  else
-    num=1
-  fi
   
-  PORT=$((${DEFAULT_PORT} + ((${num} - 1) * 2)))
-  USER_NAME="${COIN_NAME}-mn${num}"
+  PORT=${DEFAULT_PORT}
+  USER_NAME="${COIN_NAME}-mn1"
 }
 
 function create_user() 
@@ -435,4 +422,3 @@ else
   echo -e "${GREEN}${COIN_NAME^^} daemon already running.${NC}"
   exit 0
 fi
-
