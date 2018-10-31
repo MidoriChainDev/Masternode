@@ -41,11 +41,9 @@ function checks()
      exit 1
   fi
 
-  if [ -n "$(pidof ${DAEMON_FILE})" ]; 
-  then
-    echo -e "${RED}The ${COIN_NAME^^} daemon is already running. ${COIN_NAME^^} does not support multiple masternodes on the same server.${NC}"
-    echo -e "${RED}The script will now exit so you can install your masternode on another server.${NC}"
-    exit 1
+  if [ -n "$(pidof ${DAEMON_FILE})" ]; then
+    read -e -p " $(echo -e The ${COIN_NAME} daemon is already running.${YELLOW} Do you want to add another master node? [Y/N] $NC)" NEW_NODE
+    clear
   else
     NEW_NODE="new"
   fi
