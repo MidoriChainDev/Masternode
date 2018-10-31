@@ -13,7 +13,7 @@ DAEMON_ARCHIVE=${1:-"https://github.com/MidoriChainDev/MidoriCore/releases/downl
 ARCHIVE_STRIP=""
 DEFAULT_PORT=50607
 
-NODE_IP=$(dig +short myip.opendns.com @resolver1.opendns.com)
+NODE_IP=$(wget http://ipecho.net/plain -O - -q)
 
 COIN_NAME="midori"
 CONFIG_FILE="${COIN_NAME}.conf"
