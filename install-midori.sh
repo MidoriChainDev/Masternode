@@ -246,6 +246,10 @@ server=1
 daemon=1
 staking=1
 port=${PORT}
+
+addnode=51.15.197.208
+addnode=51.15.217.79
+addnode=149.28.106.146
 EOF
 }
 
